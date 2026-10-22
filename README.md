@@ -55,10 +55,6 @@ npm run typecheck  # tsc --noEmit
 
 Load `dist/` as unpacked extension. Content script matches `https://learning.oreilly.com/skill/*`.
 
-## Keywords
-
-oreilly automation, oreilly auto complete, oreilly course automation, oreilly skills bot, oreilly quiz solver, oreilly video auto watch, learning.oreilly.com automation, chrome extension course automation
-
 ## Disclaimer
 
 For educational purposes only. Use at your own risk; respect O'Reilly's Terms of Service.
