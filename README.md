@@ -7,7 +7,7 @@ Auto-complete O'Reilly courses: auto-watch videos and auto-answer quizzes on `le
 - ▶️ **Auto-watches O'Reilly skill videos** in real time to completion
 - 🤖 **Auto-answers O'Reilly quizzes** (MCQ, dropdown, matching, token highlight via Learnosity widgets)
 - 🧭 **Auto-navigates** competency blocks, lessons, and "Continue" flow
-- 🛡️ **Skips assessments safely** — never touches graded items, hands off to you with a report
+- 🤖 **Answers all quizzes including finals** (up to 3 retakes), leaves badges to you
 - 💰 **Tracks AI cost** per run (OpenRouter usage)
 - ⏸️ Pause / resume anytime, per-competency or whole-course scope
 
