@@ -180,6 +180,7 @@ async function tick(): Promise<void> {
     }
     case "video": {
       const id = currentId();
+      if (st.watched.includes(id)) { navigate(base, "overview"); return; }
       ui.item = currentTitle();
       if (!ui.pct) note("auto", "Watching: " + ui.item);
       const r = await playToEnd(document, ctrl.signal, (t, d) => {
@@ -188,11 +189,11 @@ async function tick(): Promise<void> {
         render();
       });
       if (r.ok) {
-        ui.pct = 0;
         note("ok", "Video done");
+        if (!st.watched.includes(id)) st.watched.push(id);
+        await save();
         const btn = document.querySelector(S.continueBtn);
         if (btn) await act(btn, "Continue", "auto", () => { hold(); safeClick(btn, "continue_video"); });
-        if (!st.watched.includes(id)) st.watched.push(id);
       } else if (r.reason !== "aborted") {
         st.skipped.push(id);
         st.reasons[id] = r.reason;
@@ -210,7 +211,8 @@ async function tick(): Promise<void> {
       return;
     }
     case "quiz_interstitial":
-      navigate(base, "overview");
+      // hold(): location.assign is async, so without it every 250ms tick re-issues the navigation.
+      hold(); navigate(base, "overview");
       return;
     case "assessment":
       await quizStep();
