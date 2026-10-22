@@ -29,7 +29,7 @@ Auto-complete O'Reilly courses: auto-watch videos and auto-answer quizzes on `le
 1. Go to any O'Reilly skill, e.g. `https://learning.oreilly.com/skill/...`
 2. Floating panel appears (bottom-right)
 3. Click **Run Course** (whole course) or **Run Current Chapter** (current section only)
-4. Watch it play videos and solve quizzes. **Pause** anytime; **Resume** continues.
+4. Watch it play videos and solve quizzes. **Pause** anytime, **Resume** continues.
 
 No key? Video playback still works; quiz solving needs the key.
 
@@ -43,7 +43,7 @@ No key? Video playback still works; quiz solving needs the key.
 | Video | `src/video.ts` | Real-time playback, stall detection, no speed hacks |
 | UI | `src/panel.ts` | Shadow-DOM floating panel, progress + cost + activity feed |
 
-> Assessments (graded quizzes, locked items) are classified by the model and skipped, never answered.
+> Practice quizzes and final quizzes are answered automatically (up to 3 retakes), badges are left to you.
 
 ## Dev
 
