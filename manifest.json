@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "O'Reilly Skills Jev",
+  "version": "0.1.0",
+  "permissions": ["storage"],
+  "host_permissions": ["https://learning.oreilly.com/*", "https://openrouter.ai/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    { "matches": ["https://learning.oreilly.com/skill/*"], "js": ["content.js"], "run_at": "document_idle" }
+  ],
+  "options_page": "options.html"
+}

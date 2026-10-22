@@ -1,0 +1,21 @@
+// Single source of truth for DOM selectors. Never use generated MUI classes (css-…).
+export const S = {
+  drawerToggle: '[data-testid="drawer-toggle-button"], button[aria-label^="Open drawer and go to level"]',
+  levelTab: '[role="tab"][id^="level-tab-"]',
+  block: '[data-testid="competency-block"]',
+  blockStatus: "section#lesson-level > p > span:nth-child(2)",
+  card: '[id^="lesson-card-"]',
+  statusLabel: "#status-label",
+  badgeClaimable: '[data-testid="badge-card-button-container"]',
+  badgePlain: '[data-testid="badge-card-plain-container"]',
+  playkit: '[data-testid="playkit-container"]',
+  playkitIframe: '[data-testid="playkit-container"] iframe',
+  continueBtn: '[data-testid="continue-button"]',
+  retake: '[data-testid="retake-button"]',
+  interstitial: '[data-testid="video-and-quiz-interstitial-container"]',
+  quizContainer: '[data-testid="quiz-content-container"]',
+  learnosity: "#learnosity_assess",
+  widget: ".lrn_widget",
+  footerButtons: '[data-testid="quiz-footer"] button',
+  breadcrumbs: '[data-testid="breadcrumbs"]',
+} as const;
