@@ -5,9 +5,8 @@ Auto-complete O'Reilly courses: auto-watch videos and auto-answer quizzes on `le
 ## What it does
 
 - ▶️ **Auto-watches O'Reilly skill videos** in real time to completion
-- 🤖 **Auto-answers O'Reilly quizzes** (MCQ, dropdown, matching, token highlight via Learnosity widgets)
+- 🤖 **Auto-answers all quizzes including finals** (MCQ, dropdown, matching, token highlight, up to 3 retakes), leaves badges to you
 - 🧭 **Auto-navigates** competency blocks, lessons, and "Continue" flow
-- 🤖 **Answers all quizzes including finals** (up to 3 retakes), leaves badges to you
 - 💰 **Tracks AI cost** per run (OpenRouter usage)
 - ⏸️ Pause / resume anytime, per-competency or whole-course scope
 
@@ -31,7 +30,7 @@ Auto-complete O'Reilly courses: auto-watch videos and auto-answer quizzes on `le
 3. Click **Run Course** (whole course) or **Run Current Chapter** (current section only)
 4. Watch it play videos and solve quizzes. **Pause** anytime, **Resume** continues.
 
-No key? Video playback still works; quiz solving needs the key.
+No key? Video playback still works, quiz solving needs the key.
 
 ## How it works
 
@@ -57,4 +56,4 @@ Load `dist/` as unpacked extension. Content script matches `https://learning.ore
 
 ## Disclaimer
 
-For educational purposes only. Use at your own risk; respect O'Reilly's Terms of Service.
+For educational purposes only. Use at your own risk, respect O'Reilly's Terms of Service.
