@@ -28,7 +28,7 @@ Auto-complete O'Reilly courses: auto-watch videos and auto-answer quizzes on `le
 
 1. Go to any O'Reilly skill, e.g. `https://learning.oreilly.com/skill/...`
 2. Floating panel appears (bottom-right)
-3. Click **Run course** (whole course) or **Run current chapter** (current section only)
+3. Click **Run Course** (whole course) or **Run Current Chapter** (current section only)
 4. Watch it play videos and solve quizzes. **Pause** anytime; **Resume** continues.
 
 No key? Video playback still works; quiz solving needs the key.

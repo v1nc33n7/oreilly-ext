@@ -120,8 +120,8 @@ export function initPanel(h: Handlers): void {
 
   const btns = el("div", "btns", card);
   b = {
-    all: mkBtn("Run course", () => handlers.start("all"), "primary wide", btns),
-    scope: mkBtn("Run current chapter", () => { const s = handlers.scope(); if (s) handlers.start(s); }, "wide", btns),
+    all: mkBtn("Run Course", () => handlers.start("all"), "primary wide", btns),
+    scope: mkBtn("Run Current Chapter", () => { const s = handlers.scope(); if (s) handlers.start(s); }, "wide", btns),
     pause: mkBtn("Hold", () => handlers.pause(), "", btns),
     resume: mkBtn("Carry on", () => handlers.resume(), "", btns),
   };
