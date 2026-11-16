@@ -3,6 +3,7 @@ import { S } from "./selectors";
 import { detectScreen } from "./parse";
 import type { QSpec } from "./jev";
 import { act } from "./fx";
+import { allowUnload } from "./guard";
 
 export type Read = { spec: QSpec; apply(picks: number[]): Promise<void> };
 
@@ -126,6 +127,7 @@ export async function pressResult(doc: Document, which: "continue" | "retake"): 
   const sel = which === "retake" ? S.retake : S.continueBtn;
   const b = [...doc.querySelectorAll<HTMLElement>(sel)].find((x) => text(x) !== "");
   if (!b) return false;
+  if (which === "continue") allowUnload();
   await act(b, which === "retake" ? "Retake" : "Continue", "auto", () => b.click());
   return true;
 }
