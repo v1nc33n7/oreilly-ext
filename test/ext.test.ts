@@ -2,7 +2,7 @@
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { courseBase, detectScreen, listAssessmentWidgets, nextPendingItem, parseInventory, readVideo } from "../src/parse";
+import { collectAllLevels, courseBase, detectScreen, listAssessmentWidgets, nextPendingItem, parseInventory, readVideo } from "../src/parse";
 import { navigate, safeClick } from "../src/guard";
 import { callJev, decide, parseItem, parseScreen } from "../src/jev";
 import { act } from "../src/fx";
@@ -162,4 +162,45 @@ describe("jev errors and fx", () => {
     await expect(act(bad, "x", "jev", () => { throw new Error("boom"); })).rejects.toThrow("boom");
     clean(bad);
   });
+});
+
+describe("collectAllLevels", () => {
+  // Level 2 is selected first. After a tab click the blocks render at once, then cards (or card labels) 400ms later.
+  const run = async (mode: "cards" | "labels" | "hydrate" | "autoswitch") => {
+    document.body.innerHTML = `<div role="tablist">
+      <button role="tab" id="level-tab-0" aria-selected="false"></button>
+      <button role="tab" id="level-tab-1" aria-selected="true"></button></div><div id="panel"></div>`;
+    const card = (n: string, label: string) => `<div id="lesson-card-0001-video${n}" role="button"><span id="status-label">${label}</span><p>V${n}</p></div>`;
+    const block = (id: string, inner: string) => `<div id="${id}" data-testid="competency-block">${inner}</div>`;
+    const panel = document.getElementById("panel")!;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const show = (level: number) => {
+      const [id, n] = level === 0 ? ["1.9", "19"] : ["2.10", "210"];
+      panel.innerHTML = block(id, mode === "cards" ? "" : card(n, mode === "labels" ? "" : "2 minutes"));
+      clearTimeout(timer);
+      timer = setTimeout(() => { panel.innerHTML = block(id, card(n, "2 minutes")); }, 400);
+      document.querySelectorAll("[role=tab]").forEach((t, i) => t.setAttribute("aria-selected", String(i === level)));
+    };
+    if (mode === "autoswitch") {
+      // The page opens on level 1 with nothing rendered, then selects level 2 on its own.
+      document.querySelectorAll("[role=tab]").forEach((t, i) => t.setAttribute("aria-selected", String(i === 0)));
+      setTimeout(() => show(1), 300);
+    } else show(1);
+    const wire = () => document.querySelectorAll<HTMLElement>("[role=tab]").forEach((t, i) => t.addEventListener("click", () => show(i)));
+    if (mode === "hydrate") {
+      // Page just loaded: tabs ignore clicks, then get replaced by live copies.
+      setTimeout(() => {
+        const list = document.querySelector("[role=tablist]")!;
+        list.innerHTML = list.innerHTML;
+        list.querySelectorAll("[role=tab]").forEach((t, i) => t.setAttribute("aria-selected", String(i === 1)));
+        wire();
+      }, 500);
+    } else wire();
+    const inv = await collectAllLevels(document, BASE, (m) => !!nextPendingItem(m, "all", [], {}));
+    expect(nextPendingItem(inv, "all", [], {})).toMatchObject({ competency: "1.9" });
+  };
+  it("does not keep a level parsed before its cards rendered", () => run("cards"), 15000);
+  it("does not keep a level parsed before its card labels rendered", () => run("labels"), 15000);
+  it("retries a tab click that the freshly loaded page ignored", () => run("hydrate"), 15000);
+  it("rereads a level when the page switches levels by itself while loading", () => run("autoswitch"), 15000);
 });

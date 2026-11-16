@@ -77,13 +77,16 @@ export function parseInventory(doc: Document, base: string): Competency[] {
 
 const sig = (doc: Document) => [...doc.querySelectorAll(S.block)].map((b) => b.id).join(",");
 
-// Cards render after the blocks do; wait until the card count holds for 2 polls.
+// Cards render after the blocks do, and their status labels (duration / Watched / Passed) can fill in later still.
+// Wait until every block has a card, every card has label text, and the card count holds for 2 polls.
 async function settle(doc: Document): Promise<void> {
   let last = -1, same = 0;
-  for (let i = 0; i < 50 && same < 2; i++) {
-    const n = doc.querySelectorAll(S.block + " " + S.card).length;
-    same = n === last ? same + 1 : 0;
-    last = n;
+  for (let i = 0; i < 80 && same < 2; i++) {
+    const cards = [...doc.querySelectorAll(S.block + " " + S.card)].filter((c) => c.getAttribute("role") === "button");
+    const empty = [...doc.querySelectorAll(S.block)].some((b) => !b.querySelector(S.card));
+    const unlabeled = cards.some((c) => { const l = c.querySelector(S.statusLabel); return !l || !lines(l).length; });
+    same = cards.length === last && cards.length > 0 && !empty && !unlabeled ? same + 1 : 0;
+    last = cards.length;
     await sleep(100);
   }
 }
@@ -93,29 +96,63 @@ const idKey = (id: string): [number, number] | null => {
   return m ? [+m[1], +m[2]] : null;
 };
 
+const levelTabs = (doc: Document) => [...doc.querySelectorAll<HTMLElement>(S.levelTab)];
+const panelsOf = (doc: Document) => [...doc.querySelectorAll<HTMLElement>('[role="tabpanel"]')]
+  .filter((p) => (p.getAttribute("aria-labelledby") ?? "").startsWith("level-tab-"));
+// A level is on screen when its tab is selected and, if the page labels its panels, the visible panel belongs to that tab.
+const showing = (doc: Document, t: HTMLElement): boolean => {
+  if (t.getAttribute("aria-selected") !== "true") return false;
+  const panels = panelsOf(doc);
+  return !panels.length || panels.some((p) => p.getAttribute("aria-labelledby") === t.id && !p.hidden);
+};
+
 export async function collectAllLevels(
   doc: Document, base: string, until?: (merged: Competency[]) => boolean,
 ): Promise<Competency[]> {
-  let tabs = [...doc.querySelectorAll<HTMLElement>(S.levelTab)];
-  if (!tabs.length) {
-    const toggle = doc.querySelector<HTMLElement>(S.drawerToggle);
-    if (toggle) await act(toggle, "Opening levels", "auto", () => safeClick(toggle, "open_drawer"));
-    for (let i = 0; i < 30 && !tabs.length; i++) {
-      await sleep(100);
-      tabs = [...doc.querySelectorAll<HTMLElement>(S.levelTab)];
-    }
+  let tabs = levelTabs(doc);
+  // Right after page load the drawer toggle and tabs may not exist yet: keep looking instead of falling back to the visible level only.
+  let opened = false;
+  for (let i = 0; i < 50 && !tabs.length; i++) {
+    const toggle = opened ? null : doc.querySelector<HTMLElement>(S.drawerToggle);
+    if (toggle) { opened = true; await act(toggle, "Opening levels", "auto", () => safeClick(toggle, "open_drawer")); }
+    await sleep(100);
+    tabs = levelTabs(doc);
   }
   const merged = new Map<string, Competency>();
-  const add = (list: Competency[]) => list.forEach((c) => merged.has(c.id) || merged.set(c.id, c));
+  // Keep the fuller parse of a competency, so a partial early read never hides items.
+  const add = (list: Competency[]) => list.forEach((c) => {
+    const old = merged.get(c.id);
+    if (!old || c.items.length > old.items.length) merged.set(c.id, c);
+  });
   if (!tabs.length) add(parseInventory(doc, base));
-  for (const [n, t] of tabs.entries()) {
-    if (t.getAttribute("aria-selected") !== "true") {
-      const before = sig(doc);
-      await act(t, "Level " + (n + 1), "auto", () => safeClick(t, "level_tab"));
-      for (let i = 0; i < 30 && sig(doc) === before; i++) await sleep(100);
+  for (let n = 0; n < tabs.length; n++) {
+    // Re-query by position: right after page load the page re-renders its tabs, and a click on a replaced element does nothing.
+    const at = () => levelTabs(doc)[n];
+    for (let attempt = 0; attempt < 4; attempt++) {
+      let t = at();
+      for (let tries = 0; tries < 3 && t && !showing(doc, t); tries++) {
+        const before = sig(doc);
+        if (t.getAttribute("aria-selected") !== "true") {
+          const el = t;
+          await act(el, "Level " + (n + 1), "auto", () => safeClick(el, "level_tab"));
+        }
+        // Without labelled panels, a changed block list is the only sign that the new level's content arrived.
+        for (let i = 0; i < 30; i++) {
+          const cur = at();
+          if (cur && showing(doc, cur) && (panelsOf(doc).length || sig(doc) !== before)) break;
+          await sleep(100);
+        }
+        t = at();
+      }
+      // Never became active (not hydrated, locked): reading now would file another level's blocks under this one.
+      if (!t || !showing(doc, t)) break;
+      await settle(doc);
+      // The page selects a level of its own shortly after load. If it moved while we waited, the blocks are not this level's.
+      const now = at();
+      if (!now || !showing(doc, now)) continue;
+      add(parseInventory(doc, base));
+      break;
     }
-    await settle(doc);
-    add(parseInventory(doc, base));
     if (until?.([...merged.values()])) break; // shortcut: assumes tabs ascend by competency, drop `until` otherwise
   }
   return [...merged.values()].sort((a, b) => {
