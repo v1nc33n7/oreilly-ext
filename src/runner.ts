@@ -98,6 +98,10 @@ let jevFails = 0;
 // Quiz state lives in memory: Check Answer stays enabled after checking, so the DOM cannot tell us.
 const checked = new Set<string>();
 let quizIdle = 0;
+// After a press the page needs time to react (next question, submit request, result screen). Pressing again on every tick
+// would skip questions or send Complete quiz several times, so wait before the next quiz action.
+let quizHoldUntil = 0;
+const quizHold = (ms: number) => { quizHoldUntil = Date.now() + ms; };
 
 async function handoff(why: string): Promise<void> {
   st.running = false;
@@ -118,7 +122,8 @@ async function solve(spec: QSpec): Promise<number[] | null> {
 
 // One step per tick: answer + Check, or Next / Complete, or confirm the submit dialog.
 async function quizStep(): Promise<void> {
-  if (await confirmSubmit(document)) { quizIdle = 0; return; }
+  if (Date.now() < quizHoldUntil) return;
+  if (await confirmSubmit(document)) { quizIdle = 0; quizHold(10000); return; }
   const w = activeWidget(document);
   if (!w) { if (++quizIdle > 60) await handoff("quiz page did not load"); return; }
   quizIdle = 0;
@@ -139,9 +144,12 @@ async function quizStep(): Promise<void> {
     // Final Quizzes have no Check Answer button (only Next / Complete); Knowledge Checks do.
     if (document.querySelector("#checkAnswerButton") && !(await pressFooter(document, "check"))) return handoff("Check Answer is not available");
     checked.add(w.id);
+    quizHold(1000);
     return;
   }
-  if (!(await pressFooter(document, "next")) && !(await pressFooter(document, "complete"))) quizIdle++;
+  if (await pressFooter(document, "next")) quizHold(1500);
+  else if (await pressFooter(document, "complete")) quizHold(2000); // the "ready to submit?" dialog needs a moment to appear
+  else quizIdle++;
   if (quizIdle > 30) await handoff("cannot advance");
 }
 

@@ -3,7 +3,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { collectAllLevels, courseBase, detectScreen, listAssessmentWidgets, nextPendingItem, parseInventory, readVideo } from "../src/parse";
-import { navigate, safeClick } from "../src/guard";
+import { allowUnload, navigate, safeClick } from "../src/guard";
 import { callJev, decide, parseItem, parseScreen } from "../src/jev";
 import { act } from "../src/fx";
 import { pressFooter, readQuestion } from "../src/quiz";
@@ -161,6 +161,19 @@ describe("jev errors and fx", () => {
     const bad = mk();
     await expect(act(bad, "x", "jev", () => { throw new Error("boom"); })).rejects.toThrow("boom");
     clean(bad);
+  });
+});
+
+describe("beforeunload", () => {
+  it("hides the event from page handlers only after our own navigation", () => {
+    const page = vi.fn();
+    window.addEventListener("beforeunload", page);
+    window.dispatchEvent(new Event("beforeunload"));
+    expect(page).toHaveBeenCalledTimes(1);
+    allowUnload();
+    window.dispatchEvent(new Event("beforeunload"));
+    expect(page).toHaveBeenCalledTimes(1);
+    window.removeEventListener("beforeunload", page);
   });
 });
 

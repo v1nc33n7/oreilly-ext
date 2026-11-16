@@ -4,6 +4,12 @@ import { courseBase, detectScreen } from "./parse";
 
 export const mirror = { running: false };
 
+// Quiz pages can register a beforeunload handler that raises Chrome's "Leave site?" dialog and stalls the run.
+// Our own navigations are deliberate, so for a few seconds after one we stop the page's handlers from seeing the event.
+let muteUntil = 0;
+export const allowUnload = (ms = 5000): void => { muteUntil = Date.now() + ms; };
+window.addEventListener("beforeunload", (e) => { if (Date.now() < muteUntil) e.stopImmediatePropagation(); }, true);
+
 export type ClickWhy = "continue_video" | "open_drawer" | "level_tab";
 
 export function safeClick(el: Element, why: ClickWhy): void {
@@ -12,6 +18,7 @@ export function safeClick(el: Element, why: ClickWhy): void {
     (why === "open_drawer" && el.matches(S.drawerToggle)) ||
     (why === "level_tab" && el.matches(S.levelTab));
   if (!ok) throw new Error("blocked click");
+  if (why === "continue_video") allowUnload();
   (el as HTMLElement).click();
 }
 
@@ -27,5 +34,6 @@ export function navigate(path: string, why: NavWhy): void {
       (why === "assessment" && path.startsWith(base) && last.startsWith("urn:orm:video:")) ||
       (why === "learner_open" && path.startsWith(base) && !mirror.running));
   if (!ok) throw new Error("blocked navigation");
+  if (why !== "learner_open") allowUnload();
   location.assign(path);
 }
